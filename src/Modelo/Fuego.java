@@ -2,13 +2,13 @@ package Modelo;
 
 import java.util.Random;
 
-public class FuegoModelo {
+public class Fuego {
     private int[] pixelTemperature;
     private int fireWidth;
     private int fireHeight;
     private Random random;
 
-    public FuegoModelo() {
+    public Fuego() {
         this.fireWidth = Config.FIRE_WIDTH;
         this.fireHeight = Config.FIRE_HEIGHT;
         this.pixelTemperature = new int[fireWidth * fireHeight];

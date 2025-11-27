@@ -1,6 +1,6 @@
 package Vista;
 
-import Modelo.FuegoModelo;
+import Modelo.Fuego;
 import Modelo.Config;
 
 import javax.swing.JPanel;
@@ -12,10 +12,10 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 
 public class FuegoView extends JPanel {
-    private FuegoModelo model;
+    private Fuego model;
     private BufferedImage fireImage;
 
-    public FuegoView(FuegoModelo model) {
+    public FuegoView(Fuego model) {
         this.model = model;
         setPreferredSize(new Dimension(Config.ANCHO_VENTANA, Config.ALTO_VENTANA));
         setBackground(new Color(10, 10, 20)); // Fondo azul oscuro para mejor contraste

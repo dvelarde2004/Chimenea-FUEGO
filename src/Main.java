@@ -1,4 +1,4 @@
-import Modelo.FuegoModelo;
+import Modelo.Fuego;
 import Vista.FuegoView;
 import Controller.FuegoController;
 
@@ -13,7 +13,7 @@ public class Main {
             e.printStackTrace();
         }
 
-        FuegoModelo model = new FuegoModelo();
+        Fuego model = new Fuego();
         FuegoView view = new FuegoView(model);
         FuegoController controller = new FuegoController(model, view);
 
