@@ -3,119 +3,139 @@ package Modelo;
 import java.util.Random;
 
 public class Fuego {
-    private int[] pixelTemperature;
-    private int fireWidth;
-    private int fireHeight;
-    private Random random;
+    private int[] temperaturaPixeles; // Array con la temperatura de cada pixel
+    private int anchoFuego;
+    private int altoFuego;
+    private Random aleatorio;
 
     public Fuego() {
-        this.fireWidth = Config.FIRE_WIDTH;
-        this.fireHeight = Config.FIRE_HEIGHT;
-        this.pixelTemperature = new int[fireWidth * fireHeight];
-        this.random = new Random();
-        inicializarFuegoNatural();
+        this.anchoFuego = Config.ANCHO_FUEGO;
+        this.altoFuego = Config.ALTO_FUEGO;
+        this.temperaturaPixeles = new int[anchoFuego * altoFuego];
+        this.aleatorio = new Random();
+        empezarFuego(); // Inicio el fuego
     }
 
-    private void inicializarFuegoNatural() {
-        for (int i = 0; i < pixelTemperature.length; i++) {
-            pixelTemperature[i] = Config.TEMP_MINIMA;
+    // Pongo el fuego inicial en la base
+    private void empezarFuego() {
+        // Primero pongo todo frio
+        for (int i = 0; i < temperaturaPixeles.length; i++) {
+            temperaturaPixeles[i] = Config.TEMPERATURA_MINIMA;
         }
 
-        int baseRow = fireWidth * (fireHeight - 1);
+        int filaBase = anchoFuego * (altoFuego - 1);
 
-        // BASE CON VARIACIÓN NATURAL - NO UNIFORME
-        for (int x = 0; x < fireWidth; x++) {
-            // Diferentes intensidades en la base
-            double patronOndulado = 0.6 + 0.4 * Math.sin(x * 0.08); // 0.2 a 1.0
-            double ruidoAleatorio = 0.7 + (random.nextDouble() * 0.6); // 0.7 a 1.3
-            double intensidad = patronOndulado * ruidoAleatorio;
+        // Base con variacion natural (no todo igual)
+        for (int x = 0; x < anchoFuego; x++) {
+            // Diferentes intensidades para que sea mas real
+            double patronOndas = 0.6 + 0.4 * Math.sin(x * 0.08); // Entre 0.2 y 1.0
+            double ruido = 0.7 + (aleatorio.nextDouble() * 0.6); // Entre 0.7 y 1.3
+            double intensidad = patronOndas * ruido;
 
-            pixelTemperature[baseRow + x] = (int)(700 + intensidad * 323);
+            temperaturaPixeles[filaBase + x] = (int)(700 + intensidad * 323);
         }
 
-        // AÑADIR "FOCOS" DE LLAMAS ALEATORIOS
-        for (int i = 0; i < fireWidth / 6; i++) {
-            int x = random.nextInt(fireWidth);
-            pixelTemperature[baseRow + x] = 1023; // Puntos muy calientes
+        // Añado puntos muy calientes aleatorios
+        for (int i = 0; i < anchoFuego / 6; i++) {
+            int x = aleatorio.nextInt(anchoFuego);
+            temperaturaPixeles[filaBase + x] = 1023; // Puntos blancos muy calientes
         }
     }
 
+    // Hago que el fuego se propague hacia arriba
     public void propagarFuego() {
-        int iniRow, iniBelowRow, pos, posBelow;
+        int inicioFila, inicioFilaAbajo, posicion, posicionAbajo;
 
-        for (int actualRow = fireHeight - 2; actualRow > 4; actualRow--) {
-            iniRow = fireWidth * actualRow;
-            iniBelowRow = iniRow + fireWidth;
+        // Voy de abajo hacia arriba (empezando cerca de la base)
+        for (int filaActual = altoFuego - 2; filaActual > 4; filaActual--) {
+            inicioFila = anchoFuego * filaActual;
+            inicioFilaAbajo = inicioFila + anchoFuego;
 
-            for (int actualCol = 2; actualCol < fireWidth - 2; actualCol++) {
-                pos = iniRow + actualCol;
-                posBelow = iniBelowRow + actualCol;
+            for (int columnaActual = 2; columnaActual < anchoFuego - 2; columnaActual++) {
+                posicion = inicioFila + columnaActual;
+                posicionAbajo = inicioFilaAbajo + columnaActual;
 
-                // VARIACIÓN ALEATORIA PARA ROMPER UNIFORMIDAD
-                double variacionLlama = 0.8 + (random.nextDouble() * 0.4); // 0.8 a 1.2
+                // Variacion aleatoria para que no sea todo uniforme
+                double variacion = 0.8 + (aleatorio.nextDouble() * 0.4); // Entre 0.8 y 1.2
 
-                this.pixelTemperature[pos] = (int) ((int) ((
-                                        pixelTemperature[pos - 1] * 1.2D +
-                                                pixelTemperature[pos] * 1.5D +
-                                                pixelTemperature[pos + 1] * 1.2D +
-                                                pixelTemperature[posBelow - 1] * 0.7D +
-                                                pixelTemperature[posBelow] * 0.7D +
-                                                pixelTemperature[posBelow + 1] * 0.7D
-                                ) / 5.98569 - 1.8D) * variacionLlama); // ← APLICAR VARIACIÓN
+                // Calculo la nueva temperatura usando pixeles vecinos
+                this.temperaturaPixeles[posicion] = (int) ((int) ((
+                        temperaturaPixeles[posicion - 1] * 1.2D +
+                                temperaturaPixeles[posicion] * 1.5D +
+                                temperaturaPixeles[posicion + 1] * 1.2D +
+                                temperaturaPixeles[posicionAbajo - 1] * 0.7D +
+                                temperaturaPixeles[posicionAbajo] * 0.7D +
+                                temperaturaPixeles[posicionAbajo + 1] * 0.7D
+                ) / 5.98569 - 1.8D) * variacion);
 
-                if (this.pixelTemperature[pos] < 0) {
-                    pixelTemperature[pos] = 0;
-                } else if (pixelTemperature[pos] > 1023) {
-                    pixelTemperature[pos] = 1023;
+                // Me aseguro de que no se pase de los limites
+                if (this.temperaturaPixeles[posicion] < 0) {
+                    temperaturaPixeles[posicion] = 0;
+                } else if (temperaturaPixeles[posicion] > 1023) {
+                    temperaturaPixeles[posicion] = 1023;
                 }
             }
         }
 
-        // MANTENER BASE CON VARIACIÓN (no uniforme)
-        int baseRow = fireWidth * (fireHeight - 1);
-        for (int actualCol = 0; actualCol < fireWidth; actualCol++) {
-            double variacion = 0.6 + 0.4 * Math.sin(actualCol * 0.08 + random.nextDouble() * 0.5);
+        // Mantengo la base con variacion
+        int filaBase = anchoFuego * (altoFuego - 1);
+        for (int columnaActual = 0; columnaActual < anchoFuego; columnaActual++) {
+            double variacion = 0.6 + 0.4 * Math.sin(columnaActual * 0.08 + aleatorio.nextDouble() * 0.5);
             int nuevoCalor = (int)(700 + variacion * 323);
-            pixelTemperature[baseRow + actualCol] = (int) (pixelTemperature[baseRow + actualCol] * 0.4 + nuevoCalor * 0.6);
+            temperaturaPixeles[filaBase + columnaActual] = (int) (temperaturaPixeles[filaBase + columnaActual] * 0.4 + nuevoCalor * 0.6);
         }
 
-        // AÑADIR NUEVOS FOCOS ALEATORIOS
-        if (random.nextDouble() < 0.1) { // 10% de probabilidad por frame
-            int x = random.nextInt(fireWidth);
-            pixelTemperature[baseRow + x] = 1023;
+        // Añado nuevos puntos calientes aleatorios
+        if (aleatorio.nextDouble() < 0.1) { // 10% de probabilidad
+            int x = aleatorio.nextInt(anchoFuego);
+            temperaturaPixeles[filaBase + x] = 1023;
         }
 
-        aplicarEnfriamientoNatural();
-        aplicarTurbulencia(); // ← NUEVO: variación adicional
+        enfriarPixeles(); // Enfrío los pixeles
+        aplicarMovimiento(); // Añado movimiento aleatorio
     }
 
-    public void aplicarTurbulencia() {
-        // PEQUEÑAS VARIACIONES ALEATORIAS PARA ROMPER PATRONES
-        for (int i = fireWidth; i < pixelTemperature.length - fireWidth; i++) {
-            if (pixelTemperature[i] > 100 && random.nextDouble() < 0.3) {
-                int variacion = random.nextInt(7) - 3; // -3 a +3
-                pixelTemperature[i] = Math.max(0, Math.min(1023, pixelTemperature[i] + variacion));
+    // Enfrío los pixeles calientes
+    public void enfriarPixeles() {
+        int[] temperaturaTemporal = temperaturaPixeles.clone();
+
+        for (int i = anchoFuego; i < temperaturaPixeles.length - anchoFuego; i++) {
+            if (temperaturaPixeles[i] > 300) {
+                int enfriamiento = 8 + (temperaturaPixeles[i] / 100);
+                temperaturaTemporal[i] = Math.max(0, temperaturaPixeles[i] - enfriamiento);
+                enfriarVecinos(i, enfriamiento / 2, temperaturaTemporal);
+            }
+        }
+        temperaturaPixeles = temperaturaTemporal;
+    }
+
+    // Enfrío los pixeles vecinos tambien
+    private void enfriarVecinos(int posicion, int enfriamiento, int[] tempTemp) {
+        int[] direcciones = {-anchoFuego, anchoFuego, -1, 1}; // Arriba, abajo, izquierda, derecha
+
+        for (int dir : direcciones) {
+            int vecino = posicion + dir;
+            if (vecino >= 0 && vecino < tempTemp.length) {
+                tempTemp[vecino] = Math.max(0, tempTemp[vecino] - enfriamiento);
             }
         }
     }
 
-    public void aplicarEnfriamientoNatural() {
-        for (int i = 0; i < pixelTemperature.length; i++) {
-            if (pixelTemperature[i] > 0) {
-                double probabilidad = 0.4 + (0.4 * (1.0 - pixelTemperature[i] / 1023.0));
-
-                if (random.nextDouble() < probabilidad) {
-                    int enfriamiento = 1 + random.nextInt(8);
-                    pixelTemperature[i] = Math.max(0, pixelTemperature[i] - enfriamiento);
-                }
+    // Añado movimiento aleatorio al fuego
+    public void aplicarMovimiento() {
+        for (int i = anchoFuego; i < temperaturaPixeles.length - anchoFuego; i++) {
+            if (temperaturaPixeles[i] > 100 && aleatorio.nextDouble() < 0.3) {
+                int cambio = aleatorio.nextInt(7) - 3; // Entre -3 y +3
+                temperaturaPixeles[i] = Math.max(0, Math.min(1023, temperaturaPixeles[i] + cambio));
             }
         }
     }
 
-    public int[] getPixelTemperature() {
-        return pixelTemperature;
+    // Getters para acceder a los datos
+    public int[] getTemperaturaPixeles() {
+        return temperaturaPixeles;
     }
 
-    public int getFireWidth() { return fireWidth; }
-    public int getFireHeight() { return fireHeight; }
+    public int getAnchoFuego() { return anchoFuego; }
+    public int getAltoFuego() { return altoFuego; }
 }
